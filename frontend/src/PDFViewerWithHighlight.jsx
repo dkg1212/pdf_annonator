@@ -17,7 +17,7 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
     return match ? match[0] : null;
   }
 
-  const [selection, setSelection] = useState(null);
+  // Removed selection state as highlight box is now dynamic
   const [highlights, setHighlights] = useState([]);
   const viewerRef = useRef();
   const token = localStorage.getItem('token');
@@ -65,8 +65,8 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
         .then(res => res.json())
         .then(saved => setHighlights(hs => [...hs, saved]))
         .catch(() => {});
-      setSelection(newHighlight.boundingBox);
-      sel.removeAllRanges();
+  // Remove selection highlight immediately after creation
+  sel.removeAllRanges();
     }
   };
 
@@ -81,21 +81,17 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
         <Page pageNumber={pageNumber} />
       </Document>
       {/* Render all highlights for this page */}
-      {highlights.filter(h => h.page === pageNumber).map((h, i) => (
-        <div
-          key={h._id || i}
-          className="highlight-box"
-          style={{ left: h.boundingBox.x, top: h.boundingBox.y, width: h.boundingBox.width, height: h.boundingBox.height }}
-          title={h.text}
-        />
-      ))}
-      {selection && (
-        <div
-          className="highlight-box"
-          style={{ left: selection.x, top: selection.y, width: selection.width, height: selection.height, background: 'rgba(255,255,0,0.3)' }}
-          title={selection.text}
-        />
-      )}
+      {highlights
+        .filter(h => h.page === pageNumber && h.boundingBox && typeof h.boundingBox.x === 'number' && typeof h.boundingBox.y === 'number')
+        .map((h, i) => (
+          <div
+            key={h._id || i}
+            className="highlight-box"
+            style={{ left: h.boundingBox.x, top: h.boundingBox.y, width: h.boundingBox.width, height: h.boundingBox.height }}
+            title={h.text}
+          />
+        ))}
+  {/* No selection box shown after highlight creation */}
       <div style={{marginTop:10}}>
         <button onClick={() => setPageNumber(p => Math.max(1, p-1))} disabled={pageNumber <= 1}>Previous</button>
         <span style={{margin:'0 10px'}}>Page {pageNumber} of {numPages}</span>

@@ -144,7 +144,7 @@ function App() {
                   setSelectedPdf(null);
                   setPageNumber(1);
                   const url = await fetchPdfBlob(pdf.uuid);
-                  setSelectedPdf(url);
+                  setSelectedPdf({ url, uuid: pdf.uuid });
                 }}>Open</button>
                 <button style={{marginLeft:8}} onClick={async () => {
                   const newName = prompt('Enter new name for PDF:', pdf.originalname);
@@ -183,7 +183,8 @@ function App() {
         )}
         {selectedPdf && (
           <PDFViewerWithHighlight
-            file={selectedPdf}
+            file={selectedPdf.url}
+            pdfUuid={selectedPdf.uuid}
             pageNumber={pageNumber}
             setPageNumber={setPageNumber}
             numPages={numPages}

@@ -8,10 +8,14 @@ const fs = require('fs');
 
 const router = express.Router();
 
-// Multer storage config
+// Multer storage config (use /tmp for Render, uploads/ for local)
+const uploadDir = process.env.UPLOAD_DIR || (process.env.RENDER ? '/tmp' : path.join(__dirname, '../uploads'));
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, '../uploads'));
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueName = uuidv4() + path.extname(file.originalname);

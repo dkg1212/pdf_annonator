@@ -1,0 +1,15 @@
+body.dark-mode {
+  --bg: #181818;
+  --text: #f5f5f5;
+  --card-bg: #232323;
+  --toggle-bg: #222;
+  --toggle-color: #fff;
+  --toggle-bg-active: #fff;
+  --toggle-color-active: #222;
+  background: var(--bg);
+  color: var(--text);
+}
+body.dark-mode .card, body.dark-mode .pdf-viewer {
+  background: var(--card-bg);
+  color: var(--text);
+}

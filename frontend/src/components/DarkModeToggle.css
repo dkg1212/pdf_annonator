@@ -1,0 +1,15 @@
+.dark-mode-toggle {
+  background: var(--toggle-bg, #f0f0f0);
+  color: var(--toggle-color, #222);
+  border: none;
+  border-radius: 20px;
+  padding: 0.5em 1.2em;
+  font-size: 1em;
+  cursor: pointer;
+  margin: 1em;
+  transition: background 0.3s, color 0.3s;
+}
+.dark-mode-toggle.active {
+  background: var(--toggle-bg-active, #222);
+  color: var(--toggle-color-active, #fff);
+}

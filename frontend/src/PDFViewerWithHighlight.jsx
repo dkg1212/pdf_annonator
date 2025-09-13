@@ -19,6 +19,7 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
 
   // Removed selection state as highlight box is now dynamic
   const [highlights, setHighlights] = useState([]);
+  const [scale, setScale] = useState(1.0);
   const viewerRef = useRef();
   const token = localStorage.getItem('token');
   const pdfUuid = pdfUuidProp || extractPdfUuid(file);
@@ -78,7 +79,7 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
         onLoadSuccess={({ numPages }) => setNumPages(numPages)}
         onLoadError={console.error}
       >
-        <Page pageNumber={pageNumber} />
+        <Page pageNumber={pageNumber} scale={scale} />
       </Document>
       {/* Render all highlights for this page */}
       {highlights
@@ -92,10 +93,15 @@ export default function PDFViewerWithHighlight({ file, pdfUuid: pdfUuidProp, pag
           />
         ))}
   {/* No selection box shown after highlight creation */}
-      <div style={{marginTop:10}}>
+      <div style={{marginTop:10, display:'flex', alignItems:'center', gap:16}}>
         <button onClick={() => setPageNumber(p => Math.max(1, p-1))} disabled={pageNumber <= 1}>Previous</button>
         <span style={{margin:'0 10px'}}>Page {pageNumber} of {numPages}</span>
         <button onClick={() => setPageNumber(p => Math.min(numPages, p+1))} disabled={pageNumber >= numPages}>Next</button>
+        <span style={{marginLeft:24}}>
+          <button onClick={() => setScale(s => Math.max(0.5, s - 0.2))} style={{marginRight:8}}>-</button>
+          Zoom: {(scale * 100).toFixed(0)}%
+          <button onClick={() => setScale(s => Math.min(3, s + 0.2))} style={{marginLeft:8}}>+</button>
+        </span>
       </div>
     </div>
   );

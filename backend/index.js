@@ -6,7 +6,7 @@ const cors = require('cors');
 
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'https://pdf-annonator-zlre.vercel.app/'],
   credentials: true
 }));
 // app.options('*', cors()); // Removed due to PathError crash

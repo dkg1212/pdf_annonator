@@ -1,0 +1,8 @@
+/* Highlight overlay styles */
+.highlight-box {
+  position: absolute;
+  background: rgba(255, 255, 0, 0.4);
+  border: 1px solid #ff0;
+  pointer-events: none;
+  z-index: 10;
+}

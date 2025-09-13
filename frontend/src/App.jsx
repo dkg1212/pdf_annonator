@@ -9,7 +9,7 @@ import './App.css';
 import './highlight.css';
 import PDFViewerWithHighlight from './PDFViewerWithHighlight';
 
-const API_URL = 'http://localhost:5050/api/auth';
+const API_URL = 'https://pdf-annonator.onrender.com/api/auth';
 
 function App() {
   const [isLogin, setIsLogin] = useState(true);
@@ -28,7 +28,7 @@ function App() {
 
   const fetchPdfBlob = async (uuid) => {
     try {
-      const res = await fetch(`http://localhost:5050/api/pdf/${uuid}`, {
+  const res = await fetch(`https://pdf-annonator.onrender.com/api/pdf/${uuid}`, {
         headers: { Authorization: token }
       });
       if (!res.ok) throw new Error('Failed to fetch PDF');
@@ -74,7 +74,7 @@ function App() {
     const fetchPdfs = async () => {
       setLoadingPdfs(true);
       try {
-        const res = await fetch('http://localhost:5050/api/pdf', {
+    const res = await fetch('https://pdf-annonator.onrender.com/api/pdf', {
           headers: { Authorization: token }
         });
         const data = await res.json();
@@ -100,7 +100,7 @@ function App() {
     const formData = new FormData();
     formData.append('file', selectedFile);
     try {
-      const res = await fetch('http://localhost:5050/api/pdf/upload', {
+  const res = await fetch('https://pdf-annonator.onrender.com/api/pdf/upload', {
         method: 'POST',
         headers: { Authorization: token },
         body: formData
@@ -151,7 +151,7 @@ function App() {
                   const newName = prompt('Enter new name for PDF:', pdf.originalname);
                   if (!newName || newName === pdf.originalname) return;
                   try {
-                    const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
+                    const res = await fetch(`https://pdf-annonator.onrender.com/api/pdf/${pdf.uuid}`, {
                       method: 'PUT',
                       headers: {
                         'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ function App() {
                 onDelete={async () => {
                   if (!window.confirm('Are you sure you want to delete this PDF?')) return;
                   try {
-                    const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
+                    const res = await fetch(`https://pdf-annonator.onrender.com/api/pdf/${pdf.uuid}`, {
                       method: 'DELETE',
                       headers: { Authorization: token }
                     });

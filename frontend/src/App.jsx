@@ -1,62 +1,14 @@
 
-import { useState, useEffect, useRef } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { useState, useEffect } from 'react';
+import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import './App.css';
 import './highlight.css';
 
-// Set workerSrc for pdfjs
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
-// PDF Viewer with basic highlight overlay
-function PDFViewerWithHighlight({ file, pageNumber, setPageNumber, numPages, setNumPages, onClose }) {
-  const [selection, setSelection] = useState(null);
-  const viewerRef = useRef();
-
-  // Mouse up handler to get selection
-  const handleMouseUp = () => {
-    const sel = window.getSelection();
-    if (sel && sel.toString().length > 0) {
-      const range = sel.getRangeAt(0);
-      const rect = range.getBoundingClientRect();
-      const viewerRect = viewerRef.current.getBoundingClientRect();
-      setSelection({
-        text: sel.toString(),
-        x: rect.left - viewerRect.left,
-        y: rect.top - viewerRect.top,
-        width: rect.width,
-        height: rect.height
-      });
-      sel.removeAllRanges();
-    }
-  };
-
-  return (
-    <div style={{marginTop:20, position:'relative'}} ref={viewerRef} onMouseUp={handleMouseUp}>
-      <button onClick={onClose}>Close PDF</button>
-      <Document
-        file={file}
-        onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-        onLoadError={console.error}
-      >
-        <Page pageNumber={pageNumber} />
-      </Document>
-      {selection && (
-        <div
-          className="highlight-box"
-          style={{ left: selection.x, top: selection.y, width: selection.width, height: selection.height }}
-          title={selection.text}
-        />
-      )}
-      <div style={{marginTop:10}}>
-        <button onClick={() => setPageNumber(p => Math.max(1, p-1))} disabled={pageNumber <= 1}>Previous</button>
-        <span style={{margin:'0 10px'}}>Page {pageNumber} of {numPages}</span>
-        <button onClick={() => setPageNumber(p => Math.min(numPages, p+1))} disabled={pageNumber >= numPages}>Next</button>
-      </div>
-    </div>
-  );
-}
+// PDFViewerWithHighlight is now in its own file
+import PDFViewerWithHighlight from './PDFViewerWithHighlight';
 
 const API_URL = 'http://localhost:5050/api/auth';
 

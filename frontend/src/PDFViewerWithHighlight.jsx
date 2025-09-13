@@ -34,7 +34,7 @@ export default function PDFViewerWithHighlight({
 
   useEffect(() => {
     if (!pdfUuid || !token) return;
-    fetch(`http://localhost:5050/api/highlight/${pdfUuid}`, {
+  fetch(`https://pdf-annonator.onrender.com/api/highlight/${pdfUuid}`, {
       headers: { Authorization: token }
     })
       .then(res => res.json())
@@ -64,7 +64,7 @@ export default function PDFViewerWithHighlight({
         timestamp: new Date().toISOString()
       };
 
-      fetch('http://localhost:5050/api/highlight', {
+  fetch('https://pdf-annonator.onrender.com/api/highlight', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -87,7 +87,7 @@ export default function PDFViewerWithHighlight({
   const handleRemoveHighlight = (id) => {
     if (!window.confirm('Are you sure you want to remove this highlight?')) return;
 
-    fetch(`http://localhost:5050/api/highlight/${id}`, {
+  fetch(`https://pdf-annonator.onrender.com/api/highlight/${id}`, {
       method: 'DELETE',
       headers: { Authorization: token }
     })

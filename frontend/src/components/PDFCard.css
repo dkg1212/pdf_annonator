@@ -1,0 +1,44 @@
+.pdf-card {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg, #fff);
+  color: var(--text, #222);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin: 1em 0;
+  padding: 1em 1.5em;
+  transition: box-shadow 0.2s;
+  gap: 1.2em;
+}
+.pdf-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.13);
+}
+.pdf-icon {
+  font-size: 2.2em;
+}
+.pdf-info {
+  flex: 1;
+  text-align: left;
+}
+.pdf-name {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+.pdf-uuid {
+  font-size: 0.85em;
+  color: #888;
+}
+.pdf-actions button {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  margin-left: 0.5em;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.pdf-actions .danger {
+  color: #e74c3c;
+}
+.pdf-actions button:hover {
+  color: #646cff;
+}

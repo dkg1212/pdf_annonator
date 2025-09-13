@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+.pdf-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5em;
+  margin-top: 2em;
+}

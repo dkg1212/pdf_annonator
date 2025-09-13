@@ -8,6 +8,15 @@ const router = express.Router();
 // Signup
 router.post('/signup', async (req, res) => {
   const { email, password } = req.body;
+  // Email validation regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+  // Password validation: min 8 chars, at least 1 letter and 1 number
+  if (!password || password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters and include a letter and a number' });
+  }
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -25,6 +34,13 @@ router.post('/signup', async (req, res) => {
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!email || !emailRegex.test(email)) {
+    return res.status(400).json({ message: 'Invalid email format' });
+  }
+  if (!password) {
+    return res.status(400).json({ message: 'Password is required' });
+  }
   try {
     const user = await User.findOne({ email });
     if (!user) {

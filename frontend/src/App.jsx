@@ -1,15 +1,12 @@
-
 import { useState, useEffect } from 'react';
+import PDFCard from './components/PDFCard';
+import './components/PDFCard.css';
 import DarkModeToggle from './components/DarkModeToggle';
 import './darkmode.css';
-import { Document, Page } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import './App.css';
 import './highlight.css';
-
-
-// PDFViewerWithHighlight is now in its own file
 import PDFViewerWithHighlight from './PDFViewerWithHighlight';
 
 const API_URL = 'http://localhost:5050/api/auth';
@@ -20,19 +17,19 @@ function App() {
   const [password, setPassword] = useState('');
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [message, setMessage] = useState('');
-
-  // PDF upload state (already declared above)
-
-  // PDF viewer state
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [numPages, setNumPages] = useState(null);
   const [pageNumber, setPageNumber] = useState(1);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploadMsg, setUploadMsg] = useState('');
+  const [pdfs, setPdfs] = useState([]);
+  const [loadingPdfs, setLoadingPdfs] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Fetch PDF blob from backend
   const fetchPdfBlob = async (uuid) => {
     try {
       const res = await fetch(`http://localhost:5050/api/pdf/${uuid}`, {
-        headers: { 'Authorization': token }
+        headers: { Authorization: token }
       });
       if (!res.ok) throw new Error('Failed to fetch PDF');
       const blob = await res.blob();
@@ -61,6 +58,7 @@ function App() {
         setMessage('Signup successful! Please log in.');
         setIsLogin(true);
       }
+      setTimeout(() => setMessage(''), 3000);
     } catch (err) {
       setMessage(err.message);
     }
@@ -71,22 +69,13 @@ function App() {
     localStorage.removeItem('token');
   };
 
-
-  // PDF upload state
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadMsg, setUploadMsg] = useState('');
-  const [pdfs, setPdfs] = useState([]);
-  const [loadingPdfs, setLoadingPdfs] = useState(false);
-
-  // Fetch user's PDFs
   useEffect(() => {
     if (!token) return;
     const fetchPdfs = async () => {
       setLoadingPdfs(true);
       try {
         const res = await fetch('http://localhost:5050/api/pdf', {
-          headers: { 'Authorization': token }
+          headers: { Authorization: token }
         });
         const data = await res.json();
         if (res.ok) setPdfs(data);
@@ -107,125 +96,136 @@ function App() {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!selectedFile) return setUploadMsg('Please select a PDF file.');
-    setUploadMsg('');
+    setIsUploading(true);
     const formData = new FormData();
     formData.append('file', selectedFile);
     try {
       const res = await fetch('http://localhost:5050/api/pdf/upload', {
         method: 'POST',
-        headers: { 'Authorization': token },
+        headers: { Authorization: token },
         body: formData
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Upload failed');
       setUploadMsg('Upload successful!');
       setSelectedFile(null);
+      setTimeout(() => setUploadMsg(''), 3000);
     } catch (err) {
       setUploadMsg(err.message);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  if (token) {
-    return (
-        <div className="auth-container">
-          <DarkModeToggle />
-          <h2>Welcome!</h2>
-          <button onClick={handleLogout}>Logout</button>
-          <form onSubmit={handleUpload} style={{ marginTop: 20 }}>
-            <input type="file" accept="application/pdf" onChange={handleFileChange} />
-            <button type="submit">Upload PDF</button>
-          </form>
-          <p>{uploadMsg}</p>
-          <h3>Your PDFs</h3>
-          {loadingPdfs ? <p>Loading...</p> : (
-            <ul>
-              {pdfs.length === 0 && <li>No PDFs uploaded yet.</li>}
-              {pdfs.map(pdf => (
-                <li key={pdf.uuid}>
-                  {pdf.originalname} (UUID: {pdf.uuid})
-                  <button style={{marginLeft:8}} onClick={async () => {
-                    setSelectedPdf(null);
-                    setPageNumber(1);
-                    const url = await fetchPdfBlob(pdf.uuid);
-                    setSelectedPdf({ url, uuid: pdf.uuid });
-                  }}>Open</button>
-                  <button style={{marginLeft:8}} onClick={async () => {
-                    const newName = prompt('Enter new name for PDF:', pdf.originalname);
-                    if (!newName || newName === pdf.originalname) return;
-                    try {
-                      const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': token
-                        },
-                        body: JSON.stringify({ newName })
-                      });
-                      if (!res.ok) throw new Error('Rename failed');
-                      setUploadMsg('PDF renamed!');
-                    } catch (err) {
-                      setUploadMsg(err.message);
-                    }
-                  }}>Rename</button>
-                  <button style={{marginLeft:8, color:'red'}} onClick={async () => {
-                    if (!window.confirm('Are you sure you want to delete this PDF?')) return;
-                    try {
-                      const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': token }
-                      });
-                      if (!res.ok) throw new Error('Delete failed');
-                      setUploadMsg('PDF deleted!');
-                    } catch (err) {
-                      setUploadMsg(err.message);
-                    }
-                  }}>Delete</button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {selectedPdf && (
-            <PDFViewerWithHighlight
-              file={selectedPdf.url}
-              pdfUuid={selectedPdf.uuid}
-              pageNumber={pageNumber}
-              setPageNumber={setPageNumber}
-              numPages={numPages}
-              setNumPages={setNumPages}
-              onClose={() => setSelectedPdf(null)}
-            />
-          )}
-          <p>{message}</p>
-        </div>
-    );
-  }
+  return token ? (
+    <div className="auth-container">
+      <DarkModeToggle />
+      <h2>Welcome!</h2>
+      <button onClick={handleLogout}>Logout</button>
 
-  return (
-      <div className="auth-container">
-        <DarkModeToggle />
-        <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
-        <form onSubmit={handleAuth}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit">{isLogin ? 'Login' : 'Sign Up'}</button>
-        </form>
-        <button onClick={() => { setIsLogin(!isLogin); setMessage(''); }}>
-          {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Login'}
+      <form onSubmit={handleUpload} style={{ marginTop: 20 }}>
+        <input type="file" accept="application/pdf" onChange={handleFileChange} />
+        <button type="submit" disabled={isUploading}>
+          {isUploading ? 'Uploading...' : 'Upload PDF'}
         </button>
-        <p>{message}</p>
-      </div>
+      </form>
+      {uploadMsg && <p>{uploadMsg}</p>}
+
+      <h3>Your PDFs</h3>
+      {loadingPdfs ? <p>Loading PDFs...</p> : (
+        <div className="pdf-card-list">
+          {pdfs.length === 0 ? (
+            <div>No PDFs uploaded yet.</div>
+          ) : (
+            pdfs.map(pdf => (
+              <PDFCard
+                key={pdf.uuid}
+                pdf={pdf}
+                onOpen={async () => {
+                  setSelectedPdf(null);
+                  setPageNumber(1);
+                  const url = await fetchPdfBlob(pdf.uuid);
+                  setSelectedPdf({ url, uuid: pdf.uuid });
+                }}
+                onRename={async () => {
+                  const newName = prompt('Enter new name for PDF:', pdf.originalname);
+                  if (!newName || newName === pdf.originalname) return;
+                  try {
+                    const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
+                      method: 'PUT',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: token
+                      },
+                      body: JSON.stringify({ newName })
+                    });
+                    if (!res.ok) throw new Error('Rename failed');
+                    setUploadMsg('PDF renamed successfully!');
+                    setTimeout(() => setUploadMsg(''), 3000);
+                  } catch (err) {
+                    setUploadMsg(err.message);
+                  }
+                }}
+                onDelete={async () => {
+                  if (!window.confirm('Are you sure you want to delete this PDF?')) return;
+                  try {
+                    const res = await fetch(`http://localhost:5050/api/pdf/${pdf.uuid}`, {
+                      method: 'DELETE',
+                      headers: { Authorization: token }
+                    });
+                    if (!res.ok) throw new Error('Delete failed');
+                    setUploadMsg('PDF deleted successfully!');
+                    setTimeout(() => setUploadMsg(''), 3000);
+                  } catch (err) {
+                    setUploadMsg(err.message);
+                  }
+                }}
+              />
+            ))
+          )}
+        </div>
+      )}
+
+      {selectedPdf && (
+        <PDFViewerWithHighlight
+          file={selectedPdf.url}
+          pdfUuid={selectedPdf.uuid}
+          pageNumber={pageNumber}
+          setPageNumber={setPageNumber}
+          numPages={numPages}
+          setNumPages={setNumPages}
+          onClose={() => setSelectedPdf(null)}
+        />
+      )}
+      
+      {message && <p>{message}</p>}
+    </div>
+  ) : (
+    <div className="auth-container">
+      <DarkModeToggle />
+      <h2>{isLogin ? 'Login' : 'Sign Up'}</h2>
+      <form onSubmit={handleAuth}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
+          required
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        <button type="submit">{isLogin ? 'Login' : 'Sign Up'}</button>
+      </form>
+      <button onClick={() => { setIsLogin(!isLogin); setMessage(''); }}>
+        {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Login'}
+      </button>
+      {message && <p>{message}</p>}
+    </div>
   );
 }
 

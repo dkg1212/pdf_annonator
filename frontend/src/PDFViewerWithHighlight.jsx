@@ -32,9 +32,10 @@ export default function PDFViewerWithHighlight({
   const token = localStorage.getItem('token');
   const pdfUuid = pdfUuidProp || extractPdfUuid(file);
 
+  // Fetch highlights from backend
   useEffect(() => {
     if (!pdfUuid || !token) return;
-  fetch(`https://pdf-annonator.onrender.com/api/highlight/${pdfUuid}`, {
+    fetch(`https://pdf-annonator.onrender.com/api/highlight/${pdfUuid}`, {
       headers: { Authorization: token }
     })
       .then(res => res.json())
@@ -42,6 +43,7 @@ export default function PDFViewerWithHighlight({
       .catch(() => setHighlights([]));
   }, [pdfUuid, token]);
 
+  // Add highlight
   const handleMouseUp = () => {
     const sel = window.getSelection();
     if (sel && sel.toString().length > 0) {
@@ -64,7 +66,7 @@ export default function PDFViewerWithHighlight({
         timestamp: new Date().toISOString()
       };
 
-  fetch('https://pdf-annonator.onrender.com/api/highlight', {
+      fetch('https://pdf-annonator.onrender.com/api/highlight', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -84,10 +86,11 @@ export default function PDFViewerWithHighlight({
     }
   };
 
+  // Remove highlight
   const handleRemoveHighlight = (id) => {
     if (!window.confirm('Are you sure you want to remove this highlight?')) return;
 
-  fetch(`https://pdf-annonator.onrender.com/api/highlight/${id}`, {
+    fetch(`https://pdf-annonator.onrender.com/api/highlight/${id}`, {
       method: 'DELETE',
       headers: { Authorization: token }
     })
@@ -113,7 +116,7 @@ export default function PDFViewerWithHighlight({
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <Page pageNumber={pageNumber} scale={scale} />
 
-          {/* Render Highlight Boxes */}
+          {/* Interactive Highlight Boxes */}
           {highlights
             .filter(h => h.page === pageNumber && h.boundingBox && typeof h.boundingBox.x === 'number')
             .map((h, i) => (

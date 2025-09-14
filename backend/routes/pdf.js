@@ -1,27 +1,17 @@
 const express = require('express');
 const multer = require('multer');
+
 const { v4: uuidv4 } = require('uuid');
 const PDF = require('../models/PDF');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const fs = require('fs');
+const { s3, S3_BUCKET } = require('../s3');
 
 const router = express.Router();
 
-// Multer storage config (use /tmp for Render, uploads/ for local)
-const uploadDir = process.env.UPLOAD_DIR || (process.env.RENDER ? '/tmp' : path.join(__dirname, '../uploads'));
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = uuidv4() + path.extname(file.originalname);
-    cb(null, uniqueName);
-  }
-});
+// Multer memory storage for S3
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // JWT auth middleware
@@ -35,31 +25,56 @@ function authMiddleware(req, res, next) {
   });
 }
 
-// Upload PDF
+// Upload PDF to S3
 router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
   try {
+    console.log('--- PDF UPLOAD ATTEMPT ---');
+    if (!req.file) {
+      console.log('No file received in request.');
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const uuid = uuidv4();
+    const ext = path.extname(req.file.originalname);
+    const s3Key = `${uuid}${ext}`;
+    console.log('Uploading to S3:', {
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+      ContentType: req.file.mimetype
+    });
+    await s3.upload({
+      Bucket: S3_BUCKET,
+      Key: s3Key,
+      Body: req.file.buffer,
+      ContentType: req.file.mimetype
+    }).promise();
+    console.log('S3 upload successful:', s3Key);
+    // Save metadata in MongoDB
     const pdf = new PDF({
-      uuid: path.parse(req.file.filename).name,
+      uuid,
       user: req.userId,
-      filename: req.file.filename,
+      filename: s3Key,
       originalname: req.file.originalname
     });
     await pdf.save();
+    console.log('MongoDB save successful:', pdf);
     res.status(201).json({ uuid: pdf.uuid, filename: pdf.filename, originalname: pdf.originalname });
   } catch (err) {
-    res.status(500).json({ message: 'Upload failed' });
+    console.error('Upload failed:', err);
+    res.status(500).json({ message: 'Upload failed', error: err.message });
   }
 });
 
 
-// Download PDF
+// Download PDF from S3
 router.get('/:uuid', authMiddleware, async (req, res) => {
   try {
     const pdf = await PDF.findOne({ uuid: req.params.uuid, user: req.userId });
     if (!pdf) return res.status(404).json({ message: 'PDF not found' });
-    const filePath = path.join(__dirname, '../uploads', pdf.filename);
-    if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'File not found' });
-    res.sendFile(filePath);
+    // Stream from S3
+    const s3Stream = s3.getObject({ Bucket: S3_BUCKET, Key: pdf.filename }).createReadStream();
+    res.setHeader('Content-Disposition', `attachment; filename="${pdf.originalname}"`);
+    s3Stream.on('error', () => res.status(404).json({ message: 'File not found in S3' }));
+    s3Stream.pipe(res);
   } catch (err) {
     res.status(500).json({ message: 'Error retrieving PDF' });
   }
@@ -91,14 +106,13 @@ router.put('/:uuid', authMiddleware, async (req, res) => {
   }
 });
 
-// Delete a PDF
+// Delete a PDF from S3 and DB
 router.delete('/:uuid', authMiddleware, async (req, res) => {
   try {
     const pdf = await PDF.findOneAndDelete({ uuid: req.params.uuid, user: req.userId });
     if (!pdf) return res.status(404).json({ message: 'PDF not found' });
-    // Remove file from disk
-    const filePath = path.join(__dirname, '../uploads', pdf.filename);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    // Remove from S3
+    await s3.deleteObject({ Bucket: S3_BUCKET, Key: pdf.filename }).promise();
     res.json({ message: 'PDF deleted' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to delete PDF' });

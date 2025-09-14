@@ -7,38 +7,76 @@
   box-shadow: 0 2px 8px rgba(0,0,0,0.07);
   margin: 1em 0;
   padding: 1em 1.5em;
-  transition: box-shadow 0.2s;
-  gap: 1.2em;
+  transition: box-shadow 0.2s ease;
+  gap: 1em;
+  flex-wrap: wrap;
 }
+
 .pdf-card:hover {
   box-shadow: 0 4px 16px rgba(0,0,0,0.13);
 }
+
 .pdf-icon {
-  font-size: 2.2em;
+  font-size: 2.5em;
+  flex-shrink: 0;
 }
+
 .pdf-info {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 200px;
   text-align: left;
 }
+
 .pdf-name {
   font-weight: bold;
-  font-size: 1.1em;
+  font-size: 1.2em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 .pdf-uuid {
   font-size: 0.85em;
-  color: #888;
+  color: #666;
+  word-break: break-all;
 }
+
+.pdf-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
+
 .pdf-actions button {
   background: none;
   border: none;
-  font-size: 1.2em;
-  margin-left: 0.5em;
+  font-size: 1.5em;
+  padding: 0.3em;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.2s ease;
 }
+
 .pdf-actions .danger {
   color: #e74c3c;
 }
+
 .pdf-actions button:hover {
   color: #646cff;
+}
+
+/* Responsive: On small screens, stack vertically */
+@media (max-width: 600px) {
+  .pdf-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pdf-icon {
+    font-size: 2em;
+  }
+
+  .pdf-actions {
+    margin-top: 0.5em;
+  }
 }
